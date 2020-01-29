@@ -1,0 +1,25 @@
+#!/usr/bin/bash/
+
+#SITE=$1
+i=$1
+
+#for i in $SITE/*/ ; do 
+echo $i
+if [ -f $i/BOLD.nii ] ; then
+    INFN=$i/BOLD.nii
+elif [ -f $i/BOLD.nii.gz ] ; then
+    INFN=$i/BOLD.nii.gz 
+fi
+if [ -f $INFN ] ; then
+    # if there is no traditional, run traditional
+    if [ ! -f $i/corrected_traditional.nii.gz ] ; then
+        echo "No traditionally corrected image, starting now"
+        sbatch slurm-launcher $INFN "corrected_traditional.nii.gz" "traditional" "affine"
+    fi
+    # if there is no dag, run dag
+    if [ ! -f $i/corrected_dag.nii.gz ] ; then
+        echo "No dag corrected image, starting now"
+        sbatch slurm-launcher $INFN "corrected_dag.nii.gz" "dag" "affine"
+    fi
+fi
+#done

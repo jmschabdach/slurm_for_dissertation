@@ -1,0 +1,37 @@
+#!/bin/bash
+#SBATCH --job-name=fetal_registration
+#SBATCH --nodes=1 #number of nodes requested
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=10 # brings memory to this number times 8
+#SBATCH --cluster=smp # mpi, gpu and smp are available in H2P
+#SBATCH --partition=smp # available: smp, high-mem, opa, gtx1080, titanx, k40
+#SBATCH --mail-user=jms565@pitt.edu #send email to this address if ...
+#SBATCH --mail-type=END,FAIL # ... job ends or fails
+#SBATCH --time=2-12:00:00 # 2.5 days walltime in dd-hh:mm format
+###SBATCH --qos=long # required if walltime is greater than 3 days
+
+module purge #make sure the modules environment is sane
+module load itk/20190225
+module load ants/20190225
+
+INIMG=$1
+OUTIMG=$2
+CORRTYPE=$3
+REGTYPE=$4
+
+DIR="$(dirname $INIMG)"
+
+cp $INIMG $SLURM_SCRATCH # Copy inputs to scratch
+cd $SLURM_SCRATCH
+echo $SLURM_SCRATCH
+# Set a trap to copy any temp files you may need
+run_on_exit(){
+  cp -r $SLURM_SCRATCH/* $DIR
+}
+trap run_on_exit EXIT 
+ 
+srun /ihome/apanigrahy/jms565/markov-movement-correction/registration_interface.py -i $INIMG -o $OUTIMG -r $REGTYPE -t $CORRTYPE
+ 
+crc-job-stats.py # gives stats of job, wall time, etc.
+ 
+cp -r $SLURM_SCRATCH/* $DIR # Copy outputs to submit directory
